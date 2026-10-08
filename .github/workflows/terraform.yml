@@ -7,6 +7,7 @@ on:
 permissions:
   id-token: write
   contents: read
+  pull-requests: write
 
 jobs:
   terraform:
@@ -14,11 +15,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Debug OIDC claims
-        run: |
-          TOKEN=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r .value)
-          echo "$TOKEN" | python3 -c "import sys,json,base64; p=sys.stdin.read().split('.')[1]; p+='='*(-len(p)%4); c=json.loads(base64.urlsafe_b64decode(p)); print({k:c[k] for k in ('sub','aud','iss')})"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -39,4 +35,19 @@ jobs:
         run: terraform validate
 
       - name: Plan
-        run: terraform plan -input=false
+        shell: bash
+        run: terraform plan -input=false -no-color | tee plan.txt
+
+      - name: Comment plan on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const plan = fs.readFileSync('plan.txt', 'utf8').slice(0, 60000);
+            const body = `### Terraform Plan\n\`\`\`\n${plan}\n\`\`\``;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
