@@ -12,5 +12,5 @@ provider "aws" {
 }
 
 resource "aws_s3_bucket" "demo" {
-  bucket = "my-demo-bucket-change-this-123"
+  bucket = "my-demo-buckeet-change-this-1234"
 }
