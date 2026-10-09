@@ -29,7 +29,7 @@ jobs:
         run: terraform fmt -check
 
       - name: Init
-        run: terraform init -backend=false
+        run: terraform init -input=false
 
       - name: Validate
         run: terraform validate
