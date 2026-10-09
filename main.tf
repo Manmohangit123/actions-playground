@@ -1,4 +1,12 @@
 terraform {
+  backend "s3" {
+    bucket       = "manmohan-tf-state-7k2q9x"
+    key          = "actions-playground/terraform.tfstate"
+    region       = "eu-north-1"
+    use_lockfile = true
+    encrypt      = true
+  }
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
