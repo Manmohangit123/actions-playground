@@ -1,17 +1,18 @@
-name: Terraform Checks
+name: Terraform Apply
 
 on:
-  pull_request:
+  push:
     branches: [main]
+  workflow_dispatch:
 
 permissions:
   id-token: write
   contents: read
-  pull-requests: write
 
 jobs:
-  terraform:
+  apply:
     runs-on: ubuntu-latest
+    environment: production
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -19,35 +20,17 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::201333676737:role/github-actions-plan-role
-          aws-region: ap-south-1
+          role-to-assume: arn:aws:iam::201333676737:role/github-actions-apply-role
+          aws-region: eu-north-1
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Format check
-        run: terraform fmt -check
-
       - name: Init
         run: terraform init -input=false
 
-      - name: Validate
-        run: terraform validate
-
       - name: Plan
-        shell: bash
-        run: terraform plan -input=false -no-color | tee plan.txt
+        run: terraform plan -input=false -out=tfplan
 
-      - name: Comment plan on PR
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            const plan = fs.readFileSync('plan.txt', 'utf8').slice(0, 60000);
-            const body = `### Terraform Plan\n\`\`\`\n${plan}\n\`\`\``;
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.issue.number,
-              body: body
-            });
+      - name: Apply
+        run: terraform apply -input=false tfplan
