@@ -22,3 +22,19 @@ provider "aws" {
 resource "aws_s3_bucket" "demo" {
   bucket = "manmohan-demo-bucket-4k7x2q"
 }
+
+resource "aws_s3_object" "app_py" {
+  bucket       = aws_s3_bucket.demo.id
+  key          = "python/app.py"
+  source       = "${path.module}/app.py"
+  etag         = filemd5("${path.module}/app.py")
+  content_type = "text/x-python"
+}
+
+resource "aws_s3_object" "test_app_py" {
+  bucket       = aws_s3_bucket.demo.id
+  key          = "python/test_app.py"
+  source       = "${path.module}/test_app.py"
+  etag         = filemd5("${path.module}/test_app.py")
+  content_type = "text/x-python"
+}
