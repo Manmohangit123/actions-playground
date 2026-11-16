@@ -8,7 +8,7 @@ from app import (
 
 
 def test_add():
-    assert add(3, 3) == 6
+    assert add(3, 4) == 7
 
 
 def test_subtract():
